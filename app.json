@@ -11,17 +11,37 @@
       "resizeMode": "contain",
       "backgroundColor": "#4CAF50"
     },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.prince8292.forestapp"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.prince8292.forestapp"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-av",
+      "expo-notifications",
+      [
+        "expo-updates",
+        {
+          "username": "prince8292"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "fbf8f7f6-c364-4148-875f-fd28a08448ba"
+      }
     }
   }
 }

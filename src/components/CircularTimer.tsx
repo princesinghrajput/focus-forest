@@ -1,117 +1,138 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Canvas, Circle, Group, Path, Skia } from '@shopify/react-native-skia';
 import { Text } from 'react-native-paper';
 import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
-import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+import type { SharedValue } from 'react-native-reanimated';
 
 interface CircularTimerProps {
-  progress: number;
-  duration: number;
+  progress: SharedValue<number>;
   timeRemaining: number;
+  duration?: number;
   isPaused: boolean;
   isRunning: boolean;
   label: string;
+  size?: number;
+  strokeWidth?: number;
+  colors?: {
+    background?: string;
+    progress?: string;
+    text?: string;
+    subtext?: string;
+  };
 }
 
-export default function CircularTimer({
+const DEFAULT_COLORS = {
+  background: 'rgba(255, 255, 255, 0.2)',
+  progress: '#4CAF50',
+  text: '#FFFFFF',
+  subtext: 'rgba(255, 255, 255, 0.7)',
+};
+
+export const CircularTimer: React.FC<CircularTimerProps> = ({
   progress,
-  duration,
   timeRemaining,
+  duration = 25,
   isPaused,
   isRunning,
   label,
-}: CircularTimerProps) {
-  const formatTime = (seconds: number) => {
+  size = wp('60%'),
+  strokeWidth = 15,
+  colors = DEFAULT_COLORS,
+}) => {
+  // Memoize calculations for better performance
+  const { center, radius, circumference, progressPath } = useMemo(() => {
+    const center = size / 2;
+    const radius = (size - strokeWidth) / 2;
+    const circumference = 2 * Math.PI * radius;
+    
+    const path = Skia.Path.Make();
+    path.addCircle(center, center, radius);
+    
+    return { center, radius, circumference, progressPath: path };
+  }, [size, strokeWidth]);
+
+  // Format time remaining
+  const formatTime = (seconds: number): string => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  const createArc = (cx: number, cy: number, r: number) => {
-    const path = Skia.Path.Make();
-    path.addCircle(cx, cy, r);
-    return path;
-  };
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: isRunning && !isPaused ? 1.02 : 1 }],
-  }));
-
   return (
     <View style={styles.container}>
-      <Animated.View style={[styles.animatedContainer, animatedStyle]}>
-        <Canvas style={styles.canvas}>
-          <Group>
-            <Circle 
-              cx={wp('37.5')} 
-              cy={wp('37.5')} 
-              r={wp('35')}
-              color="rgba(255, 255, 255, 0.1)"
-            />
-            <Path
-              path={createArc(wp('37.5'), wp('37.5'), wp('35'))}
-              color="#4CAF50"
-              style="stroke"
-              strokeWidth={wp('3')}
-              strokeCap="round"
-              start={0}
-              end={progress}
-            />
-          </Group>
-        </Canvas>
-        
-        <View style={styles.content}>
-          <Text style={styles.timeText}>
-            {formatTime(timeRemaining || duration * 60)}
+      <Canvas style={{ width: size, height: size }}>
+        <Group>
+          {/* Background Circle */}
+          <Circle
+            cx={center}
+            cy={center}
+            r={radius}
+            color={colors.background}
+            style="stroke"
+            strokeWidth={strokeWidth}
+          />
+          
+          {/* Progress Circle */}
+          <Path
+            path={progressPath}
+            color={colors.progress}
+            style="stroke"
+            strokeWidth={strokeWidth}
+            strokeCap="round"
+            start={0}
+            end={progress}
+          />
+        </Group>
+      </Canvas>
+      
+      <View style={[styles.textContainer, { width: size, height: size }]}>
+        <Text style={[styles.timeText, { color: colors.text }]}>
+          {formatTime(timeRemaining)}
+        </Text>
+        {isRunning ? (
+          <Text style={[styles.durationText, { color: colors.subtext }]}>
+            {isPaused ? 'PAUSED' : `of ${duration}:00`}
           </Text>
-          <Text style={styles.labelText}>
-            {isRunning 
-              ? (isPaused ? 'PAUSED' : label || 'FOCUS TIME') 
-              : 'Drag to set timer'}
+        ) : (
+          <Text style={[styles.durationText, { color: colors.subtext }]}>
+            {`${duration} MIN`}
           </Text>
-        </View>
-      </Animated.View>
+        )}
+        <Text style={[styles.label, { color: colors.text }]}>
+          {label}
+        </Text>
+      </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
-    width: wp('75%'),
-    height: wp('75%'),
+    position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  animatedContainer: {
-    width: '100%',
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  canvas: {
-    width: wp('75%'),
-    height: wp('75%'),
+  textContainer: {
     position: 'absolute',
-  },
-  content: {
     alignItems: 'center',
     justifyContent: 'center',
   },
   timeText: {
     fontSize: wp('12%'),
     fontWeight: 'bold',
-    color: '#FFFFFF',
-    textShadowColor: 'rgba(0,0,0,0.2)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    letterSpacing: wp('0.5%'),
   },
-  labelText: {
+  durationText: {
     fontSize: wp('4%'),
-    color: '#FFFFFF',
+    fontWeight: '500',
+    marginTop: wp('1%'),
+    letterSpacing: wp('0.2%'),
+  },
+  label: {
+    fontSize: wp('4%'),
     opacity: 0.8,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginTop: wp('2%'),
+    marginTop: wp('3%'),
+    fontWeight: '500',
   },
 }); 

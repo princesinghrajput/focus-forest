@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AppState, TreeType, UserProfile, LevelInfo } from '../types';
+import { AppState, TreeType, UserProfile, LevelInfo, UserSettings, FocusSession, UserStats } from '../types';
 
 // Level progression configuration
 export const LEVEL_CONFIG = {

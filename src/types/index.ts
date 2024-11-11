@@ -23,7 +23,8 @@ export interface FocusSession {
   duration: number;
   treeType: TreeType;
   completed: boolean;
-  label?: string;
+  label: string;
+  notes?: string;
 }
 
 // User profile and stats
